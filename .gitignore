@@ -1,0 +1,17 @@
+# Bỏ qua file tạm của Python
+__pycache__/
+*.py[cod]
+
+# Bỏ qua môi trường ảo (nếu có)
+venv/
+env/
+.env
+
+# Bỏ qua dữ liệu y tế nặng (QUAN TRỌNG)
+*.nii
+*.nii.gz
+*.dcm
+
+# Bỏ qua file cấu hình IDE
+.vscode/
+.idea/
