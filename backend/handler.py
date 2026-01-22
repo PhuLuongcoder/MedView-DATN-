@@ -1,5 +1,4 @@
 import vtk
-
 class MPRInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
     def __init__(self, parent=None):
         self.parent = parent
@@ -54,14 +53,12 @@ class MPRInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             super().OnLeftButtonDown()
 
 class MPRViewer:
-    # Thêm tham số initial_opacity
     def __init__(self, vtk_window, vtk_renderer_3d, ct_data, seg_data=None, initial_opacity=0.6):
         self.window = vtk_window
         self.ct_data = ct_data
         self.seg_data = seg_data 
         self.current_liver_opacity = initial_opacity
-        self.seg_lut = None # Lưu LUT để cập nhật sau này
-
+        self.seg_lut = None
         self.ren_axial = vtk.vtkRenderer()
         self.ren_coronal = vtk.vtkRenderer()
         self.ren_sagittal = vtk.vtkRenderer()
@@ -96,38 +93,26 @@ class MPRViewer:
         self.seg_lut = vtk.vtkLookupTable()
         
         if max_val <= 1.0:
-            # Case 1: Liver Only
             self.seg_lut.SetNumberOfTableValues(2)
             self.seg_lut.SetRange(0, 1)
             self.seg_lut.Build()
             self.seg_lut.SetTableValue(0, 0.0, 0.0, 0.0, 0.0)
-            # Index 1: Gold, Opacity biến thiên
             self.seg_lut.SetTableValue(1, 1.0, 0.8, 0.0, self.current_liver_opacity)
         else:
-            # Case 2: Liver + Tumor
             self.seg_lut.SetNumberOfTableValues(3)
             self.seg_lut.SetRange(0, 2)
             self.seg_lut.Build()
             self.seg_lut.SetTableValue(0, 0.0, 0.0, 0.0, 0.0)
-            # Index 1: Green, Opacity biến thiên
             self.seg_lut.SetTableValue(1, 0.0, 1.0, 0.0, self.current_liver_opacity)
-            # Index 2: Red, Opacity cố định 0.6
             self.seg_lut.SetTableValue(2, 1.0, 0.0, 0.0, 0.6)
-            
         return self.seg_lut
 
-    # [NEW] Hàm cập nhật opacity cho 2D
     def update_liver_opacity(self, opacity):
         self.current_liver_opacity = opacity
         if self.seg_lut:
-            # Lấy màu hiện tại của Index 1 (Gan) để giữ nguyên màu sắc
             color = [0.0, 0.0, 0.0, 0.0]
             self.seg_lut.GetTableValue(1, color)
-            
-            # Chỉ cập nhật kênh Alpha (Index 3)
             self.seg_lut.SetTableValue(1, color[0], color[1], color[2], opacity)
-            
-            # Yêu cầu vẽ lại
             self.window.Render()
 
     def _setup_planes(self):
@@ -147,10 +132,7 @@ class MPRViewer:
         max_dim = max(bounds[1]-bounds[0], bounds[3]-bounds[2], bounds[5]-bounds[4])
         cam_distance = max_dim * 1.5
         seg_dims = self.seg_data.GetDimensions() if self.seg_data else None
-        
-        # Tạo bảng màu
         seg_lut = self._get_dynamic_lut()
-        
         for axis, renderer, color, name in planes_config:
             try:
                 plane_ct = vtk.vtkImagePlaneWidget()
